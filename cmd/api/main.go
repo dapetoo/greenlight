@@ -1,10 +1,12 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"log"
+	"net/http"
+	"os"
+	"time"
 )
 
 const version = "1.0.0"
@@ -23,16 +25,38 @@ type application struct {
 
 func main() {
 
-	fmt.Println("Hello World")
+	var cfg config
 
-	mux := echo.New()
-	mux.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"https://labstack.com", "https://labstack.net"},
-		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
-	}))
-	mux.GET("/v1/healthcheck", healthCheckHandler)
+	//read the value of the port and env command-line flags into the config struct
+	flag.IntVar(&cfg.port, "port", 4000, "API Server Port")
+	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
+	flag.Parse()
 
-	log.Println("Startng server on port 8000")
-	mux.Logger.Fatal(mux.Start(":8000"))
+	//Init a new logger to write message to STDOUT
+	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
+
+	//Declare an instance of the application struct, containing the config anf the logger
+	app := &application{
+		config: cfg,
+		logger: logger,
+	}
+
+	//Declare a servemux and add routes which dispatches requests to the handlers
+	mux := http.NewServeMux()
+	mux.HandleFunc("/v1/healthcheck", app.healthCheckHandler)
+
+	//Declare HTTP Server
+	srv := &http.Server{
+		Addr:         fmt.Sprintf(":%d", cfg.port),
+		Handler:      mux,
+		IdleTimeout:  time.Minute,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 30 * time.Second,
+	}
+
+	//Start the HTTP Server
+	logger.Printf("starting %s server on %s", cfg.env, cfg.port)
+	err := srv.ListenAndServe()
+	logger.Fatal(err)
 
 }

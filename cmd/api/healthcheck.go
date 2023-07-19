@@ -1,12 +1,12 @@
 package main
 
 import (
-	"github.com/labstack/echo/v4"
+	"fmt"
 	"net/http"
 )
 
-func healthCheckHandler(c echo.Context) error {
-	status := "status: available"
-	environment := "environment: dev"
-	return c.String(http.StatusOK, environment+status)
+func (app *application) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "status: available\n")
+	fmt.Fprintf(w, "environment: %s\n", app.config.env)
+	fmt.Fprintf(w, "version: %s\n", version)
 }

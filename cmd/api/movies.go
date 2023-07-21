@@ -24,8 +24,8 @@ func (app *application) showMovieHandler(w http.ResponseWriter, r *http.Request)
 		CreatedAt: time.Now(),
 		Title:     "Movies",
 		Year:      2023,
-		Runtime:   12,
-		Genres:    []string{"drama"},
+		Runtime:   102,
+		Genres:    []string{"drama", "story"},
 		Version:   1,
 	}
 

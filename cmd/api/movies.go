@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"greenlight/internal/data"
 	"net/http"
@@ -18,7 +17,7 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	//Initialize a new json.Decoder which reads the request body
-	err := json.NewDecoder(r.Body).Decode(&input)
+	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.errorResponse(w, r, http.StatusBadRequest, err.Error())
 		return
@@ -26,7 +25,6 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 
 	//Dump the contents of the input struct in a HTTP response
 	fmt.Fprintf(w, "%+v\n", input)
-
 }
 
 func (app *application) showMovieHandler(w http.ResponseWriter, r *http.Request) {

@@ -19,11 +19,11 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 	//Initialize a new json.Decoder which reads the request body
 	err := app.readJSON(w, r, &input)
 	if err != nil {
-		app.errorResponse(w, r, http.StatusBadRequest, err.Error())
+		app.badRequestResponse(w, r, err)
 		return
 	}
 
-	//Dump the contents of the input struct in a HTTP response
+	//Dump the contents of the input struct in an HTTP response
 	fmt.Fprintf(w, "%+v\n", input)
 }
 

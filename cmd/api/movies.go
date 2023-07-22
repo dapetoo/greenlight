@@ -24,14 +24,16 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	//Initialize a new Validator instance
-	v := validator.New()
-	//Run validation checks
-	v.Check(input.Title != "", "title", "must be provided")
-	v.Check(len(input.Title) <= 500, "title", "must not be more than 500 bytes long")
+	movie := &data.Movie{
+		Title:   input.Title,
+		Year:    input.Year,
+		Runtime: input.Runtime,
+		Genres:  input.Genres,
+	}
 
-	//Check if any of the validation failed
-	if !v.Valid() {
+	v := validator.New()
+	// Call the ValidateMovie() function and return a response containing the errors if any of the checks fail
+	if data.ValidateMovie(v, movie); !v.Valid() {
 		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}

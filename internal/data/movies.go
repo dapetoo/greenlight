@@ -21,6 +21,8 @@ type MovieModel struct {
 	DB *sql.DB
 }
 
+type MockMovieModel struct{}
+
 // Insert a new record into the movies table
 func (m *MovieModel) Insert(movie *Movie) error {
 	return nil
@@ -38,6 +40,26 @@ func (m *MovieModel) Update(movie *Movie) error {
 
 // Delete method delete a specific record in the movies table
 func (m *MovieModel) Delete(id int64) error {
+	return nil
+}
+
+// Insert a new record into the movies table
+func (m *MockMovieModel) Insert(movie *Movie) error {
+	return nil
+}
+
+// Get method for fetching a specific record from the movies table
+func (m *MockMovieModel) Get(id int64) (*Movie, error) {
+	return nil, nil
+}
+
+// Update method update a specific record in the movies table
+func (m *MockMovieModel) Update(movie *Movie) error {
+	return nil
+}
+
+// Delete method delete a specific record in the movies table
+func (m *MockMovieModel) Delete(id int64) error {
 	return nil
 }
 

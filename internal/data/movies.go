@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"github.com/dapetoo/greenlight/internal/validator"
 	"github.com/lib/pq"
 	"time"
@@ -44,7 +45,34 @@ func (m *MovieModel) Insert(movie *Movie) error {
 
 // Get method for fetching a specific record from the movies table
 func (m *MovieModel) Get(id int64) (*Movie, error) {
-	return nil, nil
+	//Check if there is no record in the DB
+	if id < 1 {
+		return nil, ErrRecordNotFound
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	stmt := `
+			SELECT id, created_at, title, year, runtime, genres, version
+			FROM movies
+			WHERE id = $1;
+			`
+	row := m.DB.QueryRowContext(ctx, stmt, id)
+
+	//Init a pointer to the movie
+	var movie Movie
+
+	err := row.Scan(&movie.ID, &movie.CreatedAt, &movie.Year, &movie.Genres, &movie.Version)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+	return &movie, nil
 }
 
 // Update method update a specific record in the movies table

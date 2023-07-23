@@ -58,12 +58,14 @@ func (m *MovieModel) Get(id int64) (*Movie, error) {
 			FROM movies
 			WHERE id = $1;
 			`
-	row := m.DB.QueryRowContext(ctx, stmt, id)
 
 	//Init a pointer to the movie
 	var movie Movie
 
-	err := row.Scan(&movie.ID, &movie.CreatedAt, &movie.Year, &movie.Genres, &movie.Version)
+	row := m.DB.QueryRowContext(ctx, stmt, id)
+
+	err := row.Scan(
+		&movie.ID, &movie.CreatedAt, &movie.Title, &movie.Year, &movie.Runtime, pq.Array(&movie.Genres), &movie.Version)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

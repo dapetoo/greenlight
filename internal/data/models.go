@@ -5,7 +5,7 @@ import (
 	"errors"
 )
 
-// /Custom Error Implementation
+// ErrRecordNotFound Custom Error Implementation
 var (
 	ErrRecordNotFound = errors.New("models: no matching record found")
 )

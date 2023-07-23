@@ -97,6 +97,28 @@ func (m *MovieModel) Update(movie *Movie) error {
 
 // Delete method delete a specific record in the movies table
 func (m *MovieModel) Delete(id int64) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	stmt := `
+			DELETE FROM movies
+			WHERE id = $1
+			`
+	result, err := m.DB.ExecContext(ctx, stmt, id)
+	if err != nil {
+		return err
+	}
+
+	//Get the number of Rows() affected by the query
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	//Check if no rows were affected and return no record found error
+	if rowsAffected == 0 {
+		return ErrRecordNotFound
+	}
 	return nil
 }
 

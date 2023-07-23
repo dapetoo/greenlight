@@ -1,8 +1,10 @@
 package data
 
 import (
+	"context"
 	"database/sql"
 	"github.com/dapetoo/greenlight/internal/validator"
+	"github.com/lib/pq"
 	"time"
 )
 
@@ -25,7 +27,19 @@ type MockMovieModel struct{}
 
 // Insert a new record into the movies table
 func (m *MovieModel) Insert(movie *Movie) error {
-	return nil
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	stmt := `
+			INSERT INTO movies (title, year, runtime, genres)
+			VALUES ($1, $2, $3, $4) 
+			RETURNING id, created_at, version
+			`
+	//args slice containing the values for the placeholder parameters from the movie struct. Declaring this slice immediately
+	//makes it nice and clear *what values are being used where* in the query.
+	args := []interface{}{movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres)}
+
+	return m.DB.QueryRowContext(ctx, stmt, args...).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
 }
 
 // Get method for fetching a specific record from the movies table

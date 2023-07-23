@@ -71,6 +71,7 @@ func (app *application) showMovieHandler(w http.ResponseWriter, r *http.Request)
 		default:
 			app.serverErrorResponse(w, r, err)
 		}
+		return
 	}
 
 	err = app.writeJSON(w, http.StatusOK, envelope{"movie": movie}, http.Header{})

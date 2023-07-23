@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"greenlight/internal/data"
-	"greenlight/internal/validator"
+	"github.com/dapetoo/greenlight/internal/data"
+	"github.com/dapetoo/greenlight/internal/validator"
 	"net/http"
 	"time"
 )
@@ -38,7 +38,7 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	//Dump the contents of the input struct in an HTTP response
-	fmt.Fprintf(w, "%+v\n", input)
+	_, _ = fmt.Fprintf(w, "%+v\n", input)
 }
 
 func (app *application) showMovieHandler(w http.ResponseWriter, r *http.Request) {

@@ -1,7 +1,8 @@
 package data
 
 import (
-	"greenlight/internal/validator"
+	"database/sql"
+	"github.com/dapetoo/greenlight/internal/validator"
 	"time"
 )
 
@@ -13,6 +14,31 @@ type Movie struct {
 	Runtime   Runtime   `json:"runtime,omitempty"`
 	Genres    []string  `json:"genres,omitempty"`
 	Version   int32     `json:"version"`
+}
+
+// MovieModel struct which wraps a sql.DB connection pool
+type MovieModel struct {
+	DB *sql.DB
+}
+
+// Insert a new record into the movies table
+func (m *MovieModel) Insert(movie *Movie) error {
+	return nil
+}
+
+// Get method for fetching a specific record from the movies table
+func (m *MovieModel) Get(id int64) (*Movie, error) {
+	return nil, nil
+}
+
+// Update method update a specific record in the movies table
+func (m *MovieModel) Update(movie *Movie) error {
+	return nil
+}
+
+// Delete method delete a specific record in the movies table
+func (m *MovieModel) Delete(id int64) error {
+	return nil
 }
 
 // ValidateMovie runs validation checks on the Movie type.

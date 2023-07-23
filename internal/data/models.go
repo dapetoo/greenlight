@@ -11,14 +11,26 @@ var (
 )
 
 type Models struct {
-	Movies MovieModel
+	Movies interface {
+		Insert(movie *Movie) error
+		Get(id int64) (*Movie, error)
+		Update(movie *Movie) error
+		Delete(id int64) error
+	}
 }
 
 // NewModels returns a Models struct containing the init MovieModel
 func NewModels(db *sql.DB) Models {
 	return Models{
-		Movies: MovieModel{
+		Movies: &MovieModel{
 			DB: db,
 		},
+	}
+}
+
+// NewMockModels returns a Models instance containing the mock models
+func NewMockModels() Models {
+	return Models{
+		Movies: &MockMovieModel{},
 	}
 }

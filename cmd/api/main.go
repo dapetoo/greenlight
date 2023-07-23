@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"github.com/dapetoo/greenlight/internal/data"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"log"
@@ -31,6 +32,7 @@ type config struct {
 type application struct {
 	config config
 	logger *log.Logger
+	models data.Models
 }
 
 func init() {
@@ -63,7 +65,12 @@ func main() {
 	}
 
 	//Defer call to db.Close()
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			logger.Fatal(err)
+		}
+	}(db)
 
 	logger.Printf("database connection pool established successfully")
 
@@ -71,6 +78,7 @@ func main() {
 	app := &application{
 		config: cfg,
 		logger: logger,
+		models: data.NewModels(db),
 	}
 
 	//Declare HTTP Server

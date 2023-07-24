@@ -109,6 +109,12 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 		Genres  []string      `json:"genres"`
 	}
 
+	//Read the JSON request body into the input struct
+	err = app.readJSON(w, r, &input)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+	}
+
 	//Dereference the pointer if the value is nil
 	if input.Title != nil {
 		movie.Title = *input.Title
@@ -126,18 +132,6 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 		movie.Genres = input.Genres //We don't need to dereference a slice
 	}
 
-	//Read the JSON request body into the input struct
-	err = app.readJSON(w, r, &input)
-	if err != nil {
-		app.badRequestResponse(w, r, err)
-	}
-
-	//Copy the values from the request body to the appropriate fields of the movie record
-	//movie.Title = input.Title
-	//movie.Year = input.Year
-	//movie.Runtime = input.Runtime
-	//movie.Genres = input.Genres
-
 	//Validate the updated movie record, send a 422 response if any check fail
 	v := validator.New()
 
@@ -146,7 +140,7 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	//Pass the updated movie record to Update method
+	// Pass the updated movie record to the Update method
 	err = app.models.Movies.Update(movie)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)

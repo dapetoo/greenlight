@@ -50,11 +50,11 @@ func (m *MovieModel) Get(id int64) (*Movie, error) {
 		return nil, ErrRecordNotFound
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	stmt := `
-			SELECT pg_sleep(30), id, created_at, title, year, runtime, genres, version
+			SELECT id, created_at, title, year, runtime, genres, version
 			FROM movies
 			WHERE id = $1;
 			`
@@ -64,7 +64,7 @@ func (m *MovieModel) Get(id int64) (*Movie, error) {
 
 	row := m.DB.QueryRowContext(ctx, stmt, id)
 
-	err := row.Scan(&[]byte{},
+	err := row.Scan(
 		&movie.ID, &movie.CreatedAt, &movie.Title, &movie.Year, &movie.Runtime, pq.Array(&movie.Genres), &movie.Version)
 	if err != nil {
 		switch {

@@ -7,6 +7,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 )
@@ -101,4 +102,16 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst int
 		return errors.New("body must only contain a single JSON value")
 	}
 	return nil
+}
+
+// readString() returns a string value from the query string or the provided default if no matching key could be found
+func (app *application) readString(qs url.Values, key string, defaultValue string) string {
+	//Extract the value for a given string from the query string
+	s := qs.Get(key)
+
+	//If no key exists/empty, return default value
+	if s == "" {
+		return defaultValue
+	}
+	return s
 }

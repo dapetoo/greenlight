@@ -115,3 +115,15 @@ func (app *application) readString(qs url.Values, key string, defaultValue strin
 	}
 	return s
 }
+
+// readCSV reads a string value from a string from query string and splits it into a slice on the comma character.
+func (app application) readCSV(qs url.Values, key string, defaultValue []string) []string {
+	//Extract the value for a given string from the query string
+	csv := qs.Get(key)
+
+	//If no key exists/empty, return default value
+	if csv == "" {
+		return defaultValue
+	}
+	return strings.Split(csv, ",")
+}

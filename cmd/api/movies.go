@@ -6,6 +6,7 @@ import (
 	"github.com/dapetoo/greenlight/internal/data"
 	"github.com/dapetoo/greenlight/internal/validator"
 	"net/http"
+	"reflect"
 	"strconv"
 )
 
@@ -104,11 +105,10 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 
 	//If the request contains a X-Expected-Version header, verify that the movie version in the DB matches the version
 	//specified in the header
-	if r.Header.Get("X-Expected-Version") != "" {
-		if strconv.FormatInt(int64(movie.Version), 32) != r.Header.Get("X-Expected-Version") {
-			app.editConflictResponse(w, r)
-			return
-		}
+	expectedVersion := r.Header.Get("X-Expected-Version")
+	if expectedVersion != "" && strconv.Itoa(int(movie.Version)) != expectedVersion {
+		app.editConflictResponse(w, r)
+		return
 	}
 
 	//Declare an input struct to hold the expected data from the client
@@ -125,21 +125,17 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 		app.badRequestResponse(w, r, err)
 	}
 
-	//Dereference the pointer if the value is nil
-	if input.Title != nil {
-		movie.Title = *input.Title
-	}
+	vMovie := reflect.ValueOf(movie).Elem()
+	vInput := reflect.ValueOf(input)
 
-	if input.Year != nil {
-		movie.Year = *input.Year
-	}
-
-	if input.Runtime != nil {
-		movie.Runtime = *input.Runtime
-	}
-
-	if input.Genres != nil {
-		movie.Genres = input.Genres //We don't need to dereference a slice
+	for i := 0; i < vInput.NumField(); i++ {
+		inputField := vInput.Field(i)
+		if inputField.IsValid() && !inputField.IsNil() {
+			movieField := vMovie.FieldByName(vInput.Type().Field(i).Name)
+			if movieField.IsValid() && movieField.CanSet() {
+				movieField.Set(inputField.Elem())
+			}
+		}
 	}
 
 	//Validate the updated movie record, send a 422 response if any check fail
@@ -195,4 +191,39 @@ func (app *application) deleteMovieHandler(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
+}
+
+func (app *application) listMoviesHandler(w http.ResponseWriter, r *http.Request) {
+	//Declare an input struct to hold the expected data from the client
+	var input struct {
+		Title    string
+		Genres   []string
+		Page     int
+		PageSize int
+		Sort     string
+	}
+
+	v := validator.New()
+
+	//Get the url.Values map containing the query string data
+	qs := r.URL.Query()
+
+	//Extract the title and genres string values
+	input.Title = app.readString(qs, "title", "")
+	input.Genres = app.readCSV(qs, "genres", []string{})
+
+	//Get the page and page size query string values as integers
+	input.Page = app.readInt(qs, "page", 1, v)
+	input.PageSize = app.readInt(qs, "page_size", 20, v)
+
+	//Extract the sort query string value
+	input.Sort = app.readString(qs, "sort", "id")
+
+	//Check the validator instance for any errors and use the failedValidationResponse()
+	//helper to send the client a response if necessary.
+	if !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+	}
+
+	fmt.Fprintf(w, "%+v\n", input)
 }

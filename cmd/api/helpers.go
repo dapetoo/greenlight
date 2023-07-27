@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/dapetoo/greenlight/internal/validator"
 	"github.com/julienschmidt/httprouter"
 	"io"
 	"net/http"
@@ -117,7 +118,7 @@ func (app *application) readString(qs url.Values, key string, defaultValue strin
 }
 
 // readCSV reads a string value from a string from query string and splits it into a slice on the comma character.
-func (app application) readCSV(qs url.Values, key string, defaultValue []string) []string {
+func (app *application) readCSV(qs url.Values, key string, defaultValue []string) []string {
 	//Extract the value for a given string from the query string
 	csv := qs.Get(key)
 
@@ -126,4 +127,26 @@ func (app application) readCSV(qs url.Values, key string, defaultValue []string)
 		return defaultValue
 	}
 	return strings.Split(csv, ",")
+}
+
+// readInt() reads a string value from the query string and converts it to an integer before returning. If no matching
+// key found, return defaultValue. If the value couldn't be converted to an integer then we record an error message
+func (app *application) readInt(qs url.Values, key string, defaultValue int, v *validator.Validator) int {
+	//Extract the value from the string
+	s := qs.Get(key)
+
+	//If no key exists/empty, return default value
+	if s == "" {
+		return defaultValue
+	}
+
+	//Convert the value to an int, if fail, add error message to the validator instance and return default value
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		v.AddError(key, "must be an integer value")
+		return defaultValue
+	}
+
+	//return the converted integer value
+	return i
 }

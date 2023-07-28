@@ -24,7 +24,7 @@ func ValidateFilters(v *validator.Validator, f Filters) {
 }
 
 // Check that the provided Sort field matches one of the entries in the SafeList and extract the column name from the sort
-// field by stripping the leading hypen character(if one exists)
+// field by stripping the leading hyphen character(if one exists)
 func (f Filters) sortColumn() string {
 	for _, safeValue := range f.SortSafeList {
 		if f.Sort == safeValue {

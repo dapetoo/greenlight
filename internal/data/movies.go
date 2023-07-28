@@ -134,12 +134,12 @@ func (m *MovieModel) Delete(id int64) error {
 }
 
 // GetAll to return a slice of movies
-func (m *MovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, error) {
+func (m *MovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, Metadata, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	query := fmt.Sprintf(`
-		SELECT id, created_at, title, year, runtime, genres, version
+		SELECT count(*) OVER(), id, created_at, title, year, runtime, genres, version
 		FROM movies
 		WHERE (to_tsvector('simple', title) @@ plainto_tsquery('simple', $1) OR $1 ='' )
 		AND (genres @> $2 OR $2 = '{}')
@@ -151,10 +151,12 @@ func (m *MovieModel) GetAll(title string, genres []string, filters Filters) ([]*
 	//QueryContext to execute the query
 	rows, err := m.DB.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, Metadata{}, err
 	}
 
 	defer rows.Close()
+
+	totalRecords := 0
 
 	//Initialize an empty slice to hold the movie data
 	var movies []*Movie
@@ -162,6 +164,7 @@ func (m *MovieModel) GetAll(title string, genres []string, filters Filters) ([]*
 		var movie Movie
 		//Scan the values from the row into the movie struct
 		err := rows.Scan(
+			&totalRecords,
 			&movie.ID,
 			&movie.CreatedAt,
 			&movie.Title,
@@ -172,16 +175,19 @@ func (m *MovieModel) GetAll(title string, genres []string, filters Filters) ([]*
 		)
 
 		if err != nil {
-			return nil, err
+			return nil, Metadata{}, err
 		}
 		//Add the movie struct to the slice
 		movies = append(movies, &movie)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, Metadata{}, nil
 	}
-	return movies, nil
+
+	//Generate a MetaData struct passing in the total record count and pagination parameters from the client
+	metadata := calculateMetadata(totalRecords, filters.Page, filters.PageSize)
+	return movies, metadata, nil
 }
 
 // Insert a new record into the movies table
@@ -204,8 +210,8 @@ func (m *MockMovieModel) Delete(id int64) error {
 	return nil
 }
 
-func (m *MockMovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, error) {
-	return nil, nil
+func (m *MockMovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, Metadata, error) {
+	return nil, Metadata{}, nil
 }
 
 // ValidateMovie runs validation checks on the Movie type.

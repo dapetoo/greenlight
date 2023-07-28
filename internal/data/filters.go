@@ -2,6 +2,7 @@ package data
 
 import (
 	"github.com/dapetoo/greenlight/internal/validator"
+	"math"
 	"strings"
 )
 
@@ -10,6 +11,14 @@ type Filters struct {
 	PageSize     int
 	Sort         string
 	SortSafeList []string
+}
+
+type Metadata struct {
+	CurrentPage  int `json:"currentPage,omitempty"`
+	PageSize     int `json:"pageSize,omitempty"`
+	FirstPage    int `json:"first_page,omitempty"`
+	LastPage     int `json:"last_page,omitempty"`
+	TotalRecords int `json:"total_records,omitempty"`
 }
 
 func ValidateFilters(v *validator.Validator, f Filters) {
@@ -48,4 +57,20 @@ func (f Filters) limit() int {
 
 func (f Filters) offset() int {
 	return (f.Page - 1) * f.PageSize
+}
+
+// CalculateMetadata() function calculates the appropriate pagination metadata values.
+func calculateMetadata(totalRecords, page, pageSize int) Metadata {
+	if totalRecords == 0 {
+		//Return empty Metadata struct if there are no records
+		return Metadata{}
+	}
+
+	return Metadata{
+		CurrentPage:  page,
+		PageSize:     pageSize,
+		FirstPage:    1,
+		LastPage:     int(math.Ceil(float64(totalRecords) / float64(pageSize))),
+		TotalRecords: totalRecords,
+	}
 }

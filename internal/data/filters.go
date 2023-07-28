@@ -1,6 +1,9 @@
 package data
 
-import "github.com/dapetoo/greenlight/internal/validator"
+import (
+	"github.com/dapetoo/greenlight/internal/validator"
+	"strings"
+)
 
 type Filters struct {
 	Page         int
@@ -18,4 +21,23 @@ func ValidateFilters(v *validator.Validator, f Filters) {
 
 	//Check that the sort parameter matches a value in the safelist
 	v.Check(validator.In(f.Sort, f.SortSafeList...), "sort", "invalid sort value")
+}
+
+// Check that the provided Sort field matches one of the entries in the SafeList and extract the column name from the sort
+// field by stripping the leading hypen character(if one exists)
+func (f Filters) sortColumn() string {
+	for _, safeValue := range f.SortSafeList {
+		if f.Sort == safeValue {
+			return strings.TrimPrefix(f.Sort, "-")
+		}
+	}
+	panic("unsafe sort parameter: " + f.Sort)
+}
+
+// Return the sort direction(ASC or DESC) depending on the prefix character of the sort field
+func (f Filters) sortDirection() string {
+	if strings.HasPrefix(f.Sort, "-") {
+		return "DESC"
+	}
+	return "ASC"
 }

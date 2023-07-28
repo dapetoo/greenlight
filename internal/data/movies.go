@@ -132,7 +132,7 @@ func (m *MovieModel) Delete(id int64) error {
 	return nil
 }
 
-// GetAll() to return a slice of movies
+// GetAll to return a slice of movies
 func (m *MovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -196,6 +196,10 @@ func (m *MockMovieModel) Update(movie *Movie) error {
 // Delete method delete a specific record in the movies table
 func (m *MockMovieModel) Delete(id int64) error {
 	return nil
+}
+
+func (m *MockMovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, error) {
+	return nil, nil
 }
 
 // ValidateMovie runs validation checks on the Movie type.

@@ -146,8 +146,10 @@ func (m *MovieModel) GetAll(title string, genres []string, filters Filters) ([]*
 		ORDER BY %s %s, id ASC
 		LIMIT $3 OFFSET $4`, filters.sortColumn(), filters.sortDirection())
 
+	args := []interface{}{title, pq.Array(genres), filters.limit(), filters.offset()}
+
 	//QueryContext to execute the query
-	rows, err := m.DB.QueryContext(ctx, query, title, pq.Array(genres), filters.limit(), filters.offset())
+	rows, err := m.DB.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

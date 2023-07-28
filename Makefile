@@ -2,7 +2,7 @@ help: ## This help dialog.
 	@grep -F -h "##" $(MAKEFILE_LIST) | grep -F -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
 
 run-local: ## Run the app locally
-	go run app.go
+	go run ./cmd/api
 
 requirements: ## Generate go.mod & go.sum files
 	go mod tidy

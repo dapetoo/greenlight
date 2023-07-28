@@ -47,7 +47,7 @@ func New(out io.Writer, minLevel Level) *Logger {
 }
 
 func (l *Logger) PrintInfo(message string, properties map[string]string) {
-	l.print()
+	l.print(LevelInfo, message, properties)
 }
 
 // Internal method for writing the log entry

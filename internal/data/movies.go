@@ -140,10 +140,12 @@ func (m *MovieModel) GetAll(title string, genres []string, filters Filters) ([]*
 	query := `
 			SELECT id, created_at, title, year, runtime, genres, version
 			FROM movies
+			WHERE (LOWER(title) = LOWER($1) OR $1 = '')
+			AND (genres @> $2 OR $2 = '{}')
 			ORDER BY id
 			`
 	//QueryContext to execute the query
-	rows, err := m.DB.QueryContext(ctx, query)
+	rows, err := m.DB.QueryContext(ctx, query, title, pq.Array(genres))
 	if err != nil {
 		return nil, err
 	}

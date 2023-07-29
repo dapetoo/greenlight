@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"golang.org/x/time/rate"
+	"net"
 	"net/http"
+	"sync"
 )
 
 func (app *application) recoverPanic(next http.Handler) http.Handler {
@@ -21,17 +23,39 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 }
 
 func (app *application) rateLimit(next http.Handler) http.Handler {
-	//Initialize a new rate limiter which allows an average of 2 requests per second with a maximum of 4 requests
-	// in a single 'burst'
-	limiter := rate.NewLimiter(2, 4)
+	//Declare a mutex and a map to hold the client's IP addresses and rate limitters
+	var (
+		mu      sync.Mutex
+		clients = make(map[string]*rate.Limiter)
+	)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//Call limiter.Allow() to see if the request is permitted and if it's not, then call the
-		// rateLimitExceededResponse() helper to return a 429 HTTP status code response
-		if !limiter.Allow() {
+		//Extract the client's IP address from the request
+		ip, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err != nil {
+			app.serverErrorResponse(w, r, err)
+			return
+		}
+
+		//Lock the mutex to prevent this code from being executed concurrently
+		mu.Lock()
+
+		//Check to see if the IP address already exists in the map. If it doesnt, init a new rate limiter
+		// and add the IP address and limiter to the map
+		if _, found := clients[ip]; !found {
+			clients[ip] = rate.NewLimiter(2, 4)
+		}
+		//Call limiter.Allow() on the rate limiter for the current's IP address. If the request is nt allowed,
+		// unlock the mutex and send a 429 Too many requests response
+		if !clients[ip].Allow() {
+			mu.Unlock()
 			app.rateLimitExceededResponse(w, r)
 			return
 		}
+
+		//Unlock the mutex before calling the next handler in the chain.
+		mu.Unlock()
+
 		next.ServeHTTP(w, r)
 	})
 }

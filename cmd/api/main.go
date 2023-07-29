@@ -9,6 +9,8 @@ import (
 	"github.com/dapetoo/greenlight/internal/jsonlog"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	"github.com/rs/zerolog"
+	zlog "github.com/rs/zerolog/log"
 	"log"
 	"net/http"
 	"os"
@@ -39,11 +41,12 @@ type application struct {
 func init() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		zlog.Fatal().Msg("Error loading .env file")
 	}
 }
 
 func main() {
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
 	var cfg config
 
@@ -63,6 +66,7 @@ func main() {
 	db, err := openDB(cfg)
 	if err != nil {
 		logger.PrintFatal(err, nil)
+		zlog.Fatal().Err(err)
 	}
 
 	//Defer call to db.Close()
@@ -70,10 +74,12 @@ func main() {
 		err := db.Close()
 		if err != nil {
 			logger.PrintFatal(err, nil)
+			zlog.Fatal().Err(err)
 		}
 	}(db)
 
 	logger.PrintInfo("database connection pool established successfully", nil)
+	zlog.Info().Msg("database connection pool established successfully")
 
 	//Declare an instance of the application struct, containing the config anf the logger
 	app := &application{
@@ -86,6 +92,7 @@ func main() {
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%v", cfg.port),
 		Handler:      app.routes(),
+		ErrorLog:     log.New(logger, "", 0),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,

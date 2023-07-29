@@ -39,6 +39,10 @@ type Logger struct {
 	mu       sync.Mutex
 }
 
+func (l *Logger) Write(message []byte) (n int, err error) {
+	return l.print(LevelError, string(message), nil)
+}
+
 // New Return a new Logger instance which writes log entries
 func New(out io.Writer, minLevel Level) *Logger {
 	return &Logger{

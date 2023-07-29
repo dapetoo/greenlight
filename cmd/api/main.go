@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/dapetoo/greenlight/internal/data"
+	"github.com/dapetoo/greenlight/internal/jsonlog"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"log"
@@ -31,7 +32,7 @@ type config struct {
 // Application struct to hold the dependencies for HTTP handlers, helpers and the middlewares
 type application struct {
 	config config
-	logger *log.Logger
+	logger *jsonlog.Logger
 	models data.Models
 }
 
@@ -56,23 +57,23 @@ func main() {
 	flag.Parse()
 
 	//Init a new logger to write message to STDOUT
-	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
+	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
 
 	//Create a connection pool
 	db, err := openDB(cfg)
 	if err != nil {
-		logger.Fatal(err)
+		logger.PrintFatal(err, nil)
 	}
 
 	//Defer call to db.Close()
 	defer func(db *sql.DB) {
 		err := db.Close()
 		if err != nil {
-			logger.Fatal(err)
+			logger.PrintFatal(err, nil)
 		}
 	}(db)
 
-	logger.Printf("database connection pool established successfully")
+	logger.PrintInfo("database connection pool established successfully", nil)
 
 	//Declare an instance of the application struct, containing the config anf the logger
 	app := &application{
@@ -83,7 +84,7 @@ func main() {
 
 	//Declare HTTP Server
 	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", cfg.port),
+		Addr:         fmt.Sprintf(":%v", cfg.port),
 		Handler:      app.routes(),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
@@ -91,9 +92,12 @@ func main() {
 	}
 
 	//Start the HTTP Server
-	logger.Printf("starting %s server on port %d", cfg.env, srv.Addr)
+	logger.PrintInfo("starting server on port", map[string]string{
+		"addr": srv.Addr,
+		"env":  cfg.env,
+	})
 	err = srv.ListenAndServe()
-	logger.Fatal(err)
+	logger.PrintFatal(err, nil)
 
 }
 

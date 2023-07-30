@@ -4,15 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"flag"
-	"fmt"
 	"github.com/dapetoo/greenlight/internal/data"
 	"github.com/dapetoo/greenlight/internal/jsonlog"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"
-	"log"
-	"net/http"
 	"os"
 	"time"
 )
@@ -88,22 +85,7 @@ func main() {
 		models: data.NewModels(db),
 	}
 
-	//Declare HTTP Server
-	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%v", cfg.port),
-		Handler:      app.routes(),
-		ErrorLog:     log.New(logger, "", 0),
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 30 * time.Second,
-	}
-
-	//Start the HTTP Server
-	logger.PrintInfo("starting server on port", map[string]string{
-		"addr": srv.Addr,
-		"env":  cfg.env,
-	})
-	err = srv.ListenAndServe()
+	err = app.serve()
 	logger.PrintFatal(err, nil)
 
 }

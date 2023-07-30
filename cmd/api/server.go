@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -20,6 +22,7 @@ func (app *application) serve() error {
 	}
 
 	//Shutdown Error Channel to receive any errors returned by the graceful Shutdown() function
+	shutdownError := make(chan error)
 
 	//Start a background goroutine
 	go func() {
@@ -34,9 +37,16 @@ func (app *application) serve() error {
 		s := <-quit
 
 		//Log a message to notify that the signal has been caught
-		app.logger.PrintInfo("caught signal", map[string]string{
+		app.logger.PrintInfo("shutting down server", map[string]string{
 			"signal": s.String(),
 		})
+
+		//Create a context with a 5 second timeout
+		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+		defer cancel()
+
+		//Call shutdown on the server, passing in the context
+		shutdownError <- srv.Shutdown(ctx)
 
 		//Exit the application with a 0 (success) status code
 		os.Exit(0)
@@ -47,5 +57,24 @@ func (app *application) serve() error {
 		"addr": srv.Addr,
 		"env":  app.config.env,
 	})
-	return srv.ListenAndServe()
+
+	//Calling Shutdown() on the server will cause ListenAndServe() to immediately return a http.ErrServerClosed error.
+	//Return the error if it's not http.ErrServerClosed.
+	err := srv.ListenAndServe()
+	if !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
+
+	//Otherwise, wait to receive return value from Shutdown() on the shutdownError channel. If return value is an error,
+	//return the error
+	err = <-shutdownError
+	if err != nil {
+		return err
+	}
+
+	//Graceful shutdown completed successfully, and we logged a stopped server message
+	app.logger.PrintInfo("stopped server", map[string]string{
+		"addr": srv.Addr,
+	})
+	return nil
 }

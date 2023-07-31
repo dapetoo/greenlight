@@ -1,14 +1,19 @@
 package data
 
 import (
+	"context"
+	"database/sql"
 	"errors"
 	"github.com/dapetoo/greenlight/internal/validator"
 	"time"
 )
 import "golang.org/x/crypto/bcrypt"
 
-//User struct to represent an individual user.
+var (
+	ErrDuplicateEmail = errors.New("duplicate email")
+)
 
+// User struct to represent an individual user.
 type User struct {
 	ID        int64     `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
@@ -23,6 +28,11 @@ type User struct {
 type password struct {
 	plaintext *string
 	hash      []byte
+}
+
+// UserModel struct
+type UserModel struct {
+	DB *sql.DB
 }
 
 // Set method calculates the bcrypt hash of a plaintext password and stores both the hash anf the plaintext versions
@@ -78,4 +88,33 @@ func ValidateUser(v *validator.Validator, user *User) {
 	if user.Password.hash == nil {
 		panic("missing password hash for user")
 	}
+}
+
+// Insert a new record into the DB for the user
+func (m UserModel) Insert(user *User) error {
+	query := `
+			INSERT INTO users (name, email, password_hash, activated)
+			VALUES ($1, $2, $3, $4)
+			RETURNING id, created_at, version
+			`
+
+	args := []interface{}{user.Name, user.Email, user.Password.hash, user.Activated}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	//If the table already contains a record with this email address, return ErrDuplicateEmail error
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(
+		&user.ID, &user.CreatedAt, &user.Version)
+
+	if err != nil {
+		switch {
+		case err.Error() == `pq: duplicate key value violates unique constraint "users_email_key"`:
+			return ErrDuplicateEmail
+		default:
+			return err
+
+		}
+	}
+	return nil
 }

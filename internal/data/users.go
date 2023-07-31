@@ -62,3 +62,20 @@ func ValidatePasswordPlaintext(v *validator.Validator, password string) {
 	v.Check(len(password) >= 8, "password", "must be at least 8 bytes long")
 	v.Check(len(password) <= 72, "password", "must not be more than 72 bytes long")
 }
+
+func ValidateUser(v *validator.Validator, user *User) {
+	v.Check(user.Name != "", "name", "must be provided")
+	v.Check(len(user.Name) <= 500, "name", "must not be more than 500 bytes long")
+
+	ValidateEmail(v, user.Email)
+
+	//Check if password is not nil and validate the password
+	if user.Password.plaintext != nil {
+		ValidatePasswordPlaintext(v, *user.Password.plaintext)
+	}
+
+	//Check if the password hash is nil.
+	if user.Password.hash == nil {
+		panic("missing password hash for user")
+	}
+}

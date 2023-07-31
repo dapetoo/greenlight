@@ -6,6 +6,7 @@ import (
 	"flag"
 	"github.com/dapetoo/greenlight/internal/data"
 	"github.com/dapetoo/greenlight/internal/jsonlog"
+	"github.com/dapetoo/greenlight/internal/mailer"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/rs/zerolog"
@@ -26,6 +27,18 @@ type config struct {
 		maxIdleConns int
 		maxIdleTime  string
 	}
+	limiter struct {
+		enabled bool
+		rps     float64
+		burst   int
+	}
+	smtp struct {
+		host     string
+		port     int
+		username string
+		password string
+		sender   string
+	}
 }
 
 // Application struct to hold the dependencies for HTTP handlers, helpers and the middlewares
@@ -33,6 +46,7 @@ type application struct {
 	config config
 	logger *jsonlog.Logger
 	models data.Models
+	mailer mailer.Mailer
 }
 
 func init() {
@@ -54,6 +68,18 @@ func main() {
 	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-conns", 25, "PostgreSQL Max Open Connections")
 	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "PostgreSQL Max Idle Connections")
 	flag.StringVar(&cfg.db.maxIdleTime, "db-max-idle-time", "15m", "PostgreSQL Max Idle Time")
+
+	//Rate Limiter config
+	flag.BoolVar(&cfg.limiter.enabled, "limiter-enabled", true, "Enable Rate Limiting")
+	flag.Float64Var(&cfg.limiter.rps, "limiter-rps", 2, "Rate limiter maximum requests per second")
+	flag.IntVar(&cfg.limiter.burst, "limiter burst", 4, "Rate limiter maximum burst")
+
+	//SMTP Server configuration settings
+	flag.StringVar(&cfg.smtp.host, "smtp host", os.Getenv("MAIL_SERVER"), "SMTP Host")
+	flag.IntVar(&cfg.smtp.port, "smtp port", 2525, "SMTP Port")
+	flag.StringVar(&cfg.smtp.username, "smtp username", os.Getenv("MAIL_USERNAME"), "SMTP Username")
+	flag.StringVar(&cfg.smtp.password, "smtp password", os.Getenv("MAIL_PASSWORD"), "SMTP Password")
+	flag.StringVar(&cfg.smtp.sender, "smtp sender", os.Getenv("MAIL_SENDER"), "SMTP Sender")
 	flag.Parse()
 
 	//Init a new logger to write message to STDOUT

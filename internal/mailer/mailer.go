@@ -3,8 +3,9 @@ package mailer
 import (
 	"bytes"
 	"embed"
-	mail "github.com/go-mail/mail/v2"
+	"github.com/go-mail/mail/v2"
 	"html/template"
+	"log"
 	"time"
 	//mail "github.com/xhit/go-simple-mail/v2"
 )
@@ -30,10 +31,12 @@ func New(host string, port int, username, password, sender string) Mailer {
 	}
 }
 
-func (m Mailer) Send(recipient, templateFile string, data interface{}) error {
+func (m *Mailer) Send(recipient, templateFile string, data interface{}) error {
 	tmpl, err := template.New("email").ParseFS(templateFS, "templates/"+templateFile)
 	if err != nil {
-		return err
+		//return err
+		log.Println(err)
+		//panic(err)
 	}
 
 	//Execute the named template "subject" passing in the dynamic data and storing the result in a bytes.Buffer variable

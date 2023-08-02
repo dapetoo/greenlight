@@ -58,6 +58,10 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	//Call Send() to send email passing in the template and user struct data
+	//_, err = os.ReadFile("./templates/user_welcome.tmpl")
+	//if err != nil {
+	//	log.Println("Unable to read file")
+	//}
 	err = app.mailer.Send(user.Email, "user_welcome.tmpl", user)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)

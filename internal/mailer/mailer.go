@@ -11,6 +11,8 @@ import (
 )
 
 // Embedded File system to hold email templates
+//
+//go:embed templates/*
 var templateFS embed.FS
 
 //Mailer struct which contains a mail.Dialer
@@ -31,7 +33,7 @@ func New(host string, port int, username, password, sender string) Mailer {
 	}
 }
 
-func (m *Mailer) Send(recipient, templateFile string, data interface{}) error {
+func (m Mailer) Send(recipient, templateFile string, data interface{}) error {
 	tmpl, err := template.New("email").ParseFS(templateFS, "templates/"+templateFile)
 	if err != nil {
 		//return err

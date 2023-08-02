@@ -70,11 +70,16 @@ func (m Mailer) Send(recipient, templateFile string, data interface{}) error {
 	msg.SetBody("text/plain", plainBody.String())
 	msg.AddAlternative("text/html", htmlBody.String())
 
-	//DialAndSend() opens a connection to the SMTP server, sends the message, then close the connection
-	err = m.dialer.DialAndSend(msg)
-	if err != nil {
-		return err
+	//Try and send email up to three times before aborting and returning the final error, sleep for 500ms between
+	// each attempt
+	for i := 1; i <= 3; i++ {
+		//DialAndSend() opens a connection to the SMTP server, sends the message, then close the connection
+		err = m.dialer.DialAndSend(msg)
+		if err == nil {
+			return nil
+		}
+		//If it didnt work, sleep for a short time and retry
+		time.Sleep(500 * time.Millisecond)
 	}
-
-	return nil
+	return err
 }

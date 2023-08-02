@@ -57,19 +57,18 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	//Call Send() to send email passing in the template and user struct data
-	//_, err = os.ReadFile("./templates/user_welcome.tmpl")
-	//if err != nil {
-	//	log.Println("Unable to read file")
-	//}
-	err = app.mailer.Send(user.Email, "user_welcome.tmpl", user)
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return
-	}
+	//Launch a goroutine to send the welcome email as a background task
+	go func() {
+		//Call Send() to send email passing in the template and user struct data
+		err = app.mailer.Send(user.Email, "user_welcome.tmpl", user)
+		if err != nil {
+			app.logger.PrintError(err, nil)
+			return
+		}
+	}()
 
 	//JSON response to the client with the user data and a 201 status code
-	err = app.writeJSON(w, http.StatusCreated, envelope{"user": user}, nil)
+	err = app.writeJSON(w, http.StatusAccepted, envelope{"user": user}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}

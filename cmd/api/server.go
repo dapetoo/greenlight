@@ -46,10 +46,20 @@ func (app *application) serve() error {
 		defer cancel()
 
 		//Call shutdown on the server, passing in the context
-		shutdownError <- srv.Shutdown(ctx)
+		err := srv.Shutdown(ctx)
+		if err != nil {
+			shutdownError <- err
+		}
 
-		//Exit the application with a 0 (success) status code
-		os.Exit(0)
+		//Log a message to say that we're waiting for any background goroutines to complete their tasks
+		app.logger.PrintInfo("completing background tasks", map[string]string{
+			"addr": srv.Addr,
+		})
+
+		//Call Wait() to block until out WaitGroup counter is zero, essentially blocking until the background
+		//goroutines have finished. Return nil on the shutdownError channel to indicate shutdown completed without any issues
+		app.wg.Wait()
+		shutdownError <- nil
 	}()
 
 	//Log a starting server message

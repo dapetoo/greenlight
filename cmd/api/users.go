@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"github.com/dapetoo/greenlight/internal/data"
 	"github.com/dapetoo/greenlight/internal/validator"
 	"net/http"
@@ -59,6 +60,13 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 
 	//Launch a goroutine to send the welcome email as a background task
 	go func() {
+		//Run a deferred function which uses recover() to catch any panic and log an error message
+		defer func() {
+			if err := recover(); err != nil {
+				app.logger.PrintError(fmt.Errorf("%s", err), nil)
+			}
+		}()
+
 		//Call Send() to send email passing in the template and user struct data
 		err = app.mailer.Send(user.Email, "user_welcome.tmpl", user)
 		if err != nil {

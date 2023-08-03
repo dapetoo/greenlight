@@ -3,6 +3,7 @@ package data
 import (
 	"crypto/rand"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/base32"
 	"github.com/dapetoo/greenlight/internal/validator"
 	"time"
@@ -52,4 +53,20 @@ func generateToken(userID int64, ttl time.Duration, scope string) (*Token, error
 func ValidateTokenPlaintext(v *validator.Validator, tokenPlaintext string) {
 	v.Check(tokenPlaintext != "", "token", "must be provided")
 	v.Check(len(tokenPlaintext) == 26, "token", "must be 26 bytes long")
+}
+
+// TokenModel Define the TokenModel type
+type TokenModel struct {
+	DB *sql.DB
+}
+
+// New() creates a new token struct and then inserts the data in the tokens table
+func (m TokenModel) New(userID int64, ttl time.Duration, scope string) (*Token, error) {
+	token, err := generateToken(userID, ttl, scope)
+	if err != nil {
+		return nil, err
+	}
+
+	err = m.Insert(token)
+	return token, err
 }

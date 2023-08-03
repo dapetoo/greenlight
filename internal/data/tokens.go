@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base32"
+	"github.com/dapetoo/greenlight/internal/validator"
 	"time"
 )
 
@@ -45,4 +46,10 @@ func generateToken(userID int64, ttl time.Duration, scope string) (*Token, error
 	hash := sha256.Sum256([]byte(token.Plaintext))
 	token.Hash = hash[:]
 	return token, nil
+}
+
+// ValidateTokenPlaintext Check that the Plaintext token has been provided and is exactly 26 bytes long
+func ValidateTokenPlaintext(v *validator.Validator, tokenPlaintext string) {
+	v.Check(tokenPlaintext != "", "token", "must be provided")
+	v.Check(len(tokenPlaintext) == 26, "token", "must be 26 bytes long")
 }

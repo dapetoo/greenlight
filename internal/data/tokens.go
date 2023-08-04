@@ -1,6 +1,7 @@
 package data
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"database/sql"
@@ -60,7 +61,7 @@ type TokenModel struct {
 	DB *sql.DB
 }
 
-// New() creates a new token struct and then inserts the data in the tokens table
+// New creates a new token struct and then inserts the data in the tokens table
 func (m TokenModel) New(userID int64, ttl time.Duration, scope string) (*Token, error) {
 	token, err := generateToken(userID, ttl, scope)
 	if err != nil {
@@ -70,3 +71,20 @@ func (m TokenModel) New(userID int64, ttl time.Duration, scope string) (*Token, 
 	err = m.Insert(token)
 	return token, err
 }
+
+// Insert adds the data for a specific token to the tokens table
+func (m TokenModel) Insert(token *Token) error {
+	query := `
+			INSERT INTO tokens (hash, user_id, expiry, scope)
+			VALUES ($1, $2, $3, $4)
+`
+	args := []interface{}{token.Hash, token.UserID, token.Expiry, token.Scope}
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	_, err := m.DB.ExecContext(ctx, query, args...)
+	return err
+}
+
+// DeleteAllForUser deletes all tokens for a specific user and scope
+func (m TokenModel) DeleteAllForUser() error {}

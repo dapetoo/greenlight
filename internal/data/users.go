@@ -195,5 +195,28 @@ func (m UserModel) GetForToken(tokenScope, tokenPlainText string) (*User, error)
 		AND tokens.scope = $2
 		AND tokens.expiry = $3`
 
-	return nil, nil
+	//Create a slice containing the query arguments. We use [:] operator to get a slice containing the token hash
+	args := []interface{}{tokenHash[:], tokenScope, time.Now()}
+
+	var user User
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	//Execute the query, scanning the return values into a User struct.
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(
+		&user.ID, &user.CreatedAt, &user.Name, &user.Email, &user.Password.hash, &user.Activated, &user.Version,
+	)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	//Return the matching user
+	return &user, nil
 }

@@ -16,7 +16,7 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		Password string `json:"password"`
 	}
 
-	//Parse the request body into the anonymous struct
+	// Parse the request body into the anonymous struct
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.badRequestResponse(w, r, err)
@@ -58,12 +58,14 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	//After the user has been created in the DB, generate a new activation token for the user.
-	token, err := app.models.Tokens.New(user.ID, 8*24*time.Hour, data.ScopeActivation)
+	// After the user record has been created in the database, generate a new activation
+	// token for the user.
+	token, err := app.models.Tokens.New(user.ID, 3*24*time.Hour, data.ScopeActivation)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
 	}
+
 	//Use the helper method to execute an anonymous function that sends welcome email
 	app.background(func() {
 

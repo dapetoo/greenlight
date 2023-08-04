@@ -124,7 +124,8 @@ func (m UserModel) GetByEmail(email string) (*User, error) {
 	query := `
 			SELECT id, created_at, name, email, password_hash, activated, version
 			FROM users 
-			WHERE email = $1`
+			WHERE email = $1
+			`
 
 	var user User
 
@@ -158,7 +159,8 @@ func (m UserModel) Update(user *User) error {
 			UPDATE users
 			SET name = $1, email = $2, password_hash = $3, activated = $4, version = version + 1
 			WHERE id = $5 AND  version = $6
-			RETURNING version`
+			RETURNING version
+			`
 
 	args := []interface{}{
 		user.Name, user.Email, user.Password.hash, user.Activated, user.ID, user.Version,
@@ -181,19 +183,25 @@ func (m UserModel) Update(user *User) error {
 	return nil
 }
 
+// GetForToken retrieves a user record from the users table for an associated token and token scope.
 func (m UserModel) GetForToken(tokenScope, tokenPlainText string) (*User, error) {
 	//calculate the SHA-256 hash of the plaintext token provided by the client
 	tokenHash := sha256.Sum256([]byte(tokenPlainText))
 
 	//Set up the SQL query
 	query := `
-		SELECT users.id, users.created_at, users.name, users.email, users.password_hash, users.activated, users.version
+		SELECT 
+		    users.id, users.created_at, users.name, users.email, users.password_hash, users.activated, users.version
 		FROM users
-		INNER JOIN tokens 
-		ON users.id = tokens.user_id
-		WHERE tokens.hash = $1
-		AND tokens.scope = $2
-		AND tokens.expiry = $3`
+		INNER JOIN tokens
+			ON users.id = tokens.user_id
+		WHERE tokens.hash = $1 --<-- Note: this is potentially vulnerable to a timing attack, 
+            -- but if successful the attacker would only be able to retrieve a *hashed* token 
+            -- which would still require a brute-force attack to find the 26 character string
+            -- that has the same SHA-256 hash that was found from our database. 
+			AND tokens.scope = $2
+			AND tokens.expiry > $3
+		`
 
 	//Create a slice containing the query arguments. We use [:] operator to get a slice containing the token hash
 	args := []interface{}{tokenHash[:], tokenScope, time.Now()}

@@ -14,6 +14,8 @@ var (
 	ErrDuplicateEmail = errors.New("duplicate email")
 )
 
+var AnonymousUser = &User{}
+
 // User struct to represent an individual user.
 type User struct {
 	ID        int64     `json:"id"`
@@ -23,6 +25,11 @@ type User struct {
 	Password  password  `json:"-"`
 	Activated bool      `json:"activated"`
 	Version   int       `json:"-"`
+}
+
+// Check if a User instance is the AnonymousUser
+func (u *User) isAnonymous() bool {
+	return u == AnonymousUser
 }
 
 // Custom password type containing the hashed and the plaintext.

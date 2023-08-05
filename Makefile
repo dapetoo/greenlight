@@ -20,8 +20,10 @@ create_db:
 drop_db:
 	podman exec -it postgres dropdb --username=peter greenlight
 
-migrate:
+up:
+	@echo 'Running up migrations...'
 	migrate -path=./migrations -database=${GREENLIGHT_DB_DSN} up
 
 migrate down:
+	@echo 'Running down migrations...'
 	migrate -path=./migrations -database=${GREENLIGHT_DB_DSN} down

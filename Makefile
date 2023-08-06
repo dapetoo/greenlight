@@ -2,7 +2,7 @@ help: ## This help dialog.
 	@grep -F -h "##" $(MAKEFILE_LIST) | grep -F -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
 
 run: ## Run the app locally
-	go run ./cmd/api
+	go run ./cmd/api -cors-trusted-origins="http://localhost:9000 http://localhost:9001"
 
 requirements: ## Generate go.mod & go.sum files
 	go mod tidy

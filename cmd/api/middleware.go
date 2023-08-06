@@ -7,8 +7,8 @@ import (
 	"github.com/dapetoo/greenlight/internal/data"
 	"github.com/dapetoo/greenlight/internal/validator"
 	"github.com/felixge/httpsnoop"
+	"github.com/tomasen/realip"
 	"golang.org/x/time/rate"
-	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -66,35 +66,35 @@ func (app *application) rateLimit(next http.Handler) http.Handler {
 	}()
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//Extract the client's IP address from the request
-		ip, _, err := net.SplitHostPort(r.RemoteAddr)
-		if err != nil {
-			app.serverErrorResponse(w, r, err)
-			return
-		}
-		//Lock the mutex to prevent this code from being executed concurrently
-		mu.Lock()
+		if app.config.limiter.enabled {
+			//Use the realip.FromRequest() function to get the client's real IP address
+			ip := realip.FromRequest(r)
 
-		//Check to see if the IP address already exists in the map. If it doesnt, init a new rate limiter
-		// and add the IP address and limiter to the map
-		if _, found := clients[ip]; !found {
-			clients[ip] = &client{limiter: rate.NewLimiter(2, 4)}
-		}
+			//Lock the mutex to prevent this code from being executed concurrently
+			mu.Lock()
 
-		//Update the last seen time for the client
-		clients[ip].lastSeen = time.Now()
+			//Check to see if the IP address already exists in the map. If it doesnt, init a new rate limiter
+			// and add the IP address and limiter to the map
+			if _, found := clients[ip]; !found {
+				clients[ip] = &client{
+					limiter: rate.NewLimiter(rate.Limit(app.config.limiter.rps), app.config.limiter.burst),
+				}
+			}
 
-		//Call limiter.Allow() on the rate limiter for the current's IP address. If the request is nt allowed,
-		// unlock the mutex and send a 429 Too many requests response
-		if !clients[ip].limiter.Allow() {
+			//Update the last seen time for the client
+			clients[ip].lastSeen = time.Now()
+
+			//Call limiter.Allow() on the rate limiter for the current's IP address. If the request is nt allowed,
+			// unlock the mutex and send a 429 Too many requests response
+			if !clients[ip].limiter.Allow() {
+				mu.Unlock()
+				app.rateLimitExceededResponse(w, r)
+				return
+			}
+			//Unlock the mutex before calling the next handler in the chain.
 			mu.Unlock()
-			app.rateLimitExceededResponse(w, r)
-			return
+
 		}
-
-		//Unlock the mutex before calling the next handler in the chain.
-		mu.Unlock()
-
 		next.ServeHTTP(w, r)
 	})
 }

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"expvar"
 	"flag"
+	"fmt"
 	"github.com/dapetoo/greenlight/internal/data"
 	"github.com/dapetoo/greenlight/internal/jsonlog"
 	"github.com/dapetoo/greenlight/internal/mailer"
@@ -96,7 +97,14 @@ func main() {
 		cfg.cors.trustedOrigins = strings.Fields(val)
 		return nil
 	})
+
+	displayVersion := flag.Bool("version", false, "Display version and exit")
 	flag.Parse()
+
+	if *displayVersion {
+		fmt.Printf("Version:\t%s\n", version)
+		os.Exit(0)
+	}
 
 	//Init a new logger to write message to STDOUT
 	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)

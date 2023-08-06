@@ -181,7 +181,7 @@ func (app *application) requireAuthenticatedUser(next http.HandlerFunc) http.Han
 }
 
 // Permission middleware
-func (app *application) requirePermission(code string, next http.Handler) http.HandlerFunc {
+func (app *application) requirePermission(code string, next http.HandlerFunc) http.HandlerFunc {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		//Retrieve the user from the request context
 		user := app.contextGetUser(r)

@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -39,6 +40,10 @@ type config struct {
 		username string
 		password string
 		sender   string
+	}
+	//CORS struct
+	cors struct {
+		trustedOrigins []string
 	}
 }
 
@@ -82,6 +87,13 @@ func main() {
 	flag.StringVar(&cfg.smtp.username, "smtp username", os.Getenv("MAIL_USERNAME"), "SMTP Username")
 	flag.StringVar(&cfg.smtp.password, "smtp password", os.Getenv("MAIL_PASSWORD"), "SMTP Password")
 	flag.StringVar(&cfg.smtp.sender, "smtp sender", os.Getenv("MAIL_SENDER"), "SMTP Sender")
+
+	//flag.Func() function to process the cors-trusted origins command line flag. strings.Fields function split the
+	//flag value into a slice based on whitespace characters and assign it to config struct.
+	flag.Func("cors-trusted-origins", "Trusted CORS origins (space separated)", func(val string) error {
+		cfg.cors.trustedOrigins = strings.Fields(val)
+		return nil
+	})
 	flag.Parse()
 
 	//Init a new logger to write message to STDOUT

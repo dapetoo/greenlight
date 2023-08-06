@@ -229,6 +229,7 @@ func (app *application) enableCORS(next http.Handler) http.Handler {
 						//Set the necessary preflight responses headers
 						w.Header().Set("Access-Control-Allow-Methods", "OPTIONS, PUT, PATCH, DELETE")
 						w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
+						w.Header().Set("Access-Control-Max-Age", "-1")
 
 						//Write the headers along with a 200 OK status code
 						w.WriteHeader(http.StatusOK)

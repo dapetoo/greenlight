@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"expvar"
 	"flag"
 	"github.com/dapetoo/greenlight/internal/data"
 	"github.com/dapetoo/greenlight/internal/jsonlog"
@@ -12,6 +13,7 @@ import (
 	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -77,7 +79,7 @@ func main() {
 	flag.StringVar(&cfg.db.maxIdleTime, "db-max-idle-time", "15m", "PostgreSQL Max Idle Time")
 
 	//Rate Limiter config
-	flag.BoolVar(&cfg.limiter.enabled, "limiter-enabled", true, "Enable Rate Limiting")
+	flag.BoolVar(&cfg.limiter.enabled, "limiter-enabled", false, "Enable Rate Limiting")
 	flag.Float64Var(&cfg.limiter.rps, "limiter-rps", 2, "Rate limiter maximum requests per second")
 	flag.IntVar(&cfg.limiter.burst, "limiter burst", 4, "Rate limiter maximum burst")
 
@@ -117,6 +119,24 @@ func main() {
 
 	logger.PrintInfo("database connection pool established successfully", nil)
 	zlog.Info().Msg("database connection pool established successfully")
+
+	//Publish a new version variable in the expvar handler containing our application version number
+	expvar.NewString("version").Set(version)
+
+	//Publish the number of active goroutines
+	expvar.Publish("goroutines", expvar.Func(func() interface{} {
+		return runtime.NumGoroutine()
+	}))
+
+	//Publish the Database connection pool statistics
+	expvar.Publish("database", expvar.Func(func() interface{} {
+		return db.Stats()
+	}))
+
+	//Publish the current Unix timestamp
+	expvar.Publish("timestamp", expvar.Func(func() interface{} {
+		return time.Now().Unix()
+	}))
 
 	//Declare an instance of the application struct, containing the config anf the logger
 	app := &application{

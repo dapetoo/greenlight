@@ -20,7 +20,11 @@ import (
 	"time"
 )
 
-const version = "1.0.0"
+// Build-Time variable to hold the executable binary time.
+var (
+	buildTime string
+	version   string
+)
 
 // Config Struct to hold configuration settings
 type config struct {
@@ -103,6 +107,7 @@ func main() {
 
 	if *displayVersion {
 		fmt.Printf("Version:\t%s\n", version)
+		fmt.Printf("Build time:\t%s\n", buildTime)
 		os.Exit(0)
 	}
 

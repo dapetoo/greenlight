@@ -3,6 +3,7 @@ module github.com/dapetoo/greenlight
 go 1.20
 
 require (
+	github.com/felixge/httpsnoop v1.0.3
 	github.com/go-mail/mail/v2 v2.3.0
 	github.com/joho/godotenv v1.5.1
 	github.com/julienschmidt/httprouter v1.3.0
@@ -13,7 +14,6 @@ require (
 )
 
 require (
-	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	golang.org/x/sys v0.10.0 // indirect

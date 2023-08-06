@@ -14,12 +14,17 @@ confirm:
 		exit 1; \
 	fi
 
+# ================================================================================================ #
+# DEVELOPMENT
+# ================================================================================================ #
+
 ## run/api: run the cmd/api application
 .PHONY: run/api
 run/api: ## Run the app locally
-	go run ./cmd/api -cors-trusted-origins="http://localhost:9000 http://localhost:9001"
+	go run ./cmd/api -db-dsn=${GREENLIGHT_DB_DSN}
 
-## requirements: Ensures that the go.mod and go.sum files are in sync and that only the required dependencies and their correct versions are listed.
+## requirements: Ensures that the go.mod and go.sum files are in sync and that only the required dependencies and
+#their correct versions are listed.
 .PHONY: requirements
 requirements: ## Generate go.mod & go.sum files
 	go mod tidy
@@ -30,7 +35,7 @@ db/postgres:
 	podman run --name=postgres -p 5432:5432 -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
 				-e POSTGRES_USER=$POSTGRES_USER -d postgres:15.3-alpine
 
-## db/psql: Open the DB using PSQL
+## db/psql: Interact with the DB using PSQL
 .PHONY: db/psql
 db/psql:
 	 psql ${GREENLIGHT_DB_DSN}
@@ -64,3 +69,17 @@ db/migrations/new:
 	migrate create -seq -ext=.sql -dir=./migrations ${name}
 	#make migration name=create_example_table
 
+# ================================================================================================ #
+# QUALITY CONTROL
+# ================================================================================================ #
+## audit: tidy dependencies and format, vet and test all code
+.PHONY: audit
+audit:
+	@echo 'Tidying and verifying module dependencies'
+	go mod tidy
+	go mod verify
+	@echo 'Formatting code .....'
+	go vet ./...
+	staticcheck ./...
+	@echo 'Running tests......'
+	go test -race -vet=off ./...

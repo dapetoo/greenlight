@@ -21,7 +21,8 @@ func (app *application) readIDParam(r *http.Request) (int64, error) {
 
 	id, err := strconv.ParseInt(params.ByName("id"), 10, 64)
 	if err != nil {
-		return 0, errors.New(fmt.Sprintf("the %d is invalid", id))
+		//return 0, errors.New(fmt.Sprintf("the %d is invalid", id))
+		return 0, fmt.Errorf("the %d is invalid", id)
 	}
 	return id, nil
 }

@@ -69,7 +69,7 @@ sudo -i -u postgres psql -c "CREATE DATABASE greenlight"
 sudo -i -u postgres psql -d greenlight -c "CREATE EXTENSION IF NOT EXISTS citext"
 sudo -i -u postgres psql -d greenlight -c "CREATE ROLE greenlight WITH LOGIN PASSWORD '${DB_PASSWORD}'"
 
-# Add a DSN for connecting to the greenlight database to the system-wide environment
+# Add a DSN for connecting to the GreenLight database to the system-wide environment
 # variables in the /etc/environment file.
 echo "GREENLIGHT_DB_DSN='postgres://greenlight:${DB_PASSWORD}@localhost/greenlight'" >> /etc/environment
 

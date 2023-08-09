@@ -70,7 +70,7 @@ db/migrations/new:
 	#make migration name=create_example_table
 
 # ================================================================================================ #
-# QUALITY CONTROL
+# 				QUALITY CONTROL
 # ================================================================================================ #
 ## audit: tidy dependencies and format, vet and test all code
 .PHONY: audit

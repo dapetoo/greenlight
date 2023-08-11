@@ -120,11 +120,11 @@ production/connect:
 production/deploy/api:
 	rsync -P ./bin/linux_amd64/api ubuntu@${production_host_ip}:~
 	rsync -rP --delete ./migrations ubuntu@${production_host_ip}:~
-#	rsync -P ./remote/production/api.service ubuntu@${production_host_ip}:~
+	rsync -P ./remote/production/api.service ubuntu@${production_host_ip}:~
 #	rsync -P ./remote/production/Caddyfile ubuntu@${production_host_ip}:~
-	ssh -t ubuntu@${production_host_ip} 'migrate -path ~/migrations -database $$GREENLIGHT_DB_DSN up'
-#        && sudo mv ~/api.service /etc/systemd/system/ \
-#        && sudo systemctl enable api \
-#        && sudo systemctl restart api \
+	ssh -t ubuntu@${production_host_ip} 'migrate -path ~/migrations -database $$GREENLIGHT_DB_DSN up' \
+        && sudo mv ~/api.service /etc/systemd/system/ \
+        && sudo systemctl enable api \
+        && sudo systemctl restart api
 #        && sudo mv ~/Caddyfile /etc/caddy/ \
 #        && sudo systemctl reload caddy \

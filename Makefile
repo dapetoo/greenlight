@@ -108,7 +108,7 @@ build/api:
 # ================================================================================================ #
 # 						PRODUCTION
 # ================================================================================================ #
-production_host_ip = '18.205.154.87'
+production_host_ip = '3.84.17.200'
 
 ##production/connect: connect to the production server
 .PHONY: production/connect

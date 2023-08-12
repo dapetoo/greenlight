@@ -19,8 +19,8 @@ Type=exec
 User=greenlight
 Group=greenlight
 EnvironmentFile=/etc/environment
-WorkingDirectory=/home/greenlight
-ExecStart=/home/greenlight/api -port=4000 -db-dsn=${GREENLIGHT_DB_DSN} -env=production
+WorkingDirectory=/home/ubuntu
+ExecStart=/home/ubuntu/api -port=4000 -db-dsn=${GREENLIGHT_DB_DSN} -env=production
 
 # Automatically restart the service after a 5-second wait if it exits with a non-zero
 # exit code. If it restarts more than 5 times in 600 seconds, then the rate limit we
